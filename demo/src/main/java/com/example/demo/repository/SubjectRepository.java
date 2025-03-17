@@ -1,13 +1,13 @@
-package com.example.demo.repository;
+// package com.example.demo.repository;
 
-import com.example.demo.model.Subject;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+// import com.example.demo.model.Subject;
+// import org.springframework.data.jpa.repository.JpaRepository;
+// import org.springframework.stereotype.Repository;
 
-import java.util.List;
+// import java.util.List;
 
-@Repository
-public interface SubjectRepository extends JpaRepository<Subject, String> {
+// @Repository
+// public interface SubjectRepository extends JpaRepository<Subject, String> {
 
-    List<Subject> findByGradeLevel(String gradeLevel);
-}
+// List<Subject> findByGradeLevel(String gradeLevel);
+// }

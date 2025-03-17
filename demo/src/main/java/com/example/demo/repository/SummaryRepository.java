@@ -9,7 +9,12 @@ import java.util.List;
 
 @Repository
 public interface SummaryRepository extends JpaRepository<Summary, String> {
-    List<Summary> findByCreator(User creator); // Tìm kiếm theo User object
+
+    List<Summary> findByCreatedBy(User createdBy);
 
     List<Summary> findByStatus(String status);
+
+    List<Summary> findByGrade(String grade);
+
+    List<Summary> findByMethod(String method); // Filter summaries by method (PHOBERT or T5_DIEN_GIAI)
 }

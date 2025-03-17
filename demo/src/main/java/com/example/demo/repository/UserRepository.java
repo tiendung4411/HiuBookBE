@@ -8,13 +8,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, String> { // Đảo ngược thứ tự
+public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByUsername(String username);
 
     List<User> findByRole(String role);
 
     List<User> findByRoleNot(String role);
 
-    List<User> findByRoleAndUsernameNot(String role, String username); // mean
-
+    List<User> findByRoleAndUsernameNot(String role, String username);
 }

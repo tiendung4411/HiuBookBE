@@ -3,7 +3,7 @@ package com.example.demo.service;
 import com.example.demo.model.Summary;
 import com.example.demo.model.User;
 import com.example.demo.repository.SummaryRepository;
-import com.example.demo.repository.UserRepository; // Cần UserRepository
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,29 +17,30 @@ public class SummaryService {
     private SummaryRepository summaryRepository;
 
     @Autowired
-    private UserRepository userRepository; // Inject UserRepository
+    private UserService userService;
 
     public Summary createSummary(Summary summary) {
-        // Thêm logic nghiệp vụ (ví dụ: set created_at, updated_at)
         return summaryRepository.save(summary);
     }
 
-    public Optional<Summary> getSummaryById(String summaryId) {
-        return summaryRepository.findById(summaryId);
+    public void deleteSummary(String id) {
+        summaryRepository.deleteById(id);
     }
 
     public List<Summary> getAllSummaries() {
         return summaryRepository.findAll();
     }
 
-    public List<Summary> getSummariesByCreatedBy(String createdBy) {
-        Optional<User> userOptional = userRepository.findById(createdBy); // Tìm User theo userId
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            return summaryRepository.findByCreator(user); // Truyền User object
-        } else {
-            // Xử lý trường hợp không tìm thấy User
-            return null; // Hoặc throw một exception
+    public Optional<Summary> getSummaryById(String id) {
+        return summaryRepository.findById(id);
+    }
+
+    public void updateSummaryStatus(String id, String status) {
+        Optional<Summary> optionalSummary = getSummaryById(id);
+        if (optionalSummary.isPresent()) {
+            Summary summary = optionalSummary.get();
+            summary.setStatus(status);
+            summaryRepository.save(summary);
         }
     }
 
@@ -47,9 +48,19 @@ public class SummaryService {
         return summaryRepository.findByStatus(status);
     }
 
-    public void deleteSummary(String summaryId) {
-        summaryRepository.deleteById(summaryId);
+    public List<Summary> getSummariesByUser(String userId) {
+        Optional<User> optionalUser = userService.getUserById(userId);
+        if (optionalUser.isPresent()) {
+            return summaryRepository.findByCreatedBy(optionalUser.get());
+        }
+        return List.of();
     }
 
-    // Các phương thức nghiệp vụ khác liên quan đến Summary (ví dụ: duyệt/từ chối)
+    public List<Summary> getSummariesByGrade(String grade) {
+        return summaryRepository.findByGrade(grade);
+    }
+
+    public List<Summary> getSummariesByMethod(String method) {
+        return summaryRepository.findByMethod(method); // Fetch summaries by method
+    }
 }
