@@ -1,7 +1,10 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.SummaryDTO;
 import com.example.demo.model.Summary;
+import com.example.demo.model.User;
 import com.example.demo.service.SummaryService;
+import com.example.demo.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/summaries")
@@ -18,27 +22,87 @@ public class SummaryController {
     @Autowired
     private SummaryService summaryService;
 
+    @Autowired
+    private UserRepository userRepository; // To handle user retrieval by ID
+
     // Get all summaries
-    @GetMapping
-    public ResponseEntity<List<Summary>> getAllSummaries() {
-        List<Summary> summaries = summaryService.getAllSummaries();
-        return new ResponseEntity<>(summaries, HttpStatus.OK);
-    }
+@GetMapping
+public ResponseEntity<List<SummaryDTO>> getAllSummaries() {
+    List<SummaryDTO> summaries = summaryService.getAllSummaries();
+    return new ResponseEntity<>(summaries, HttpStatus.OK);
+}
 
-    // Get a summary by ID
-    @GetMapping("/{id}")
-    public ResponseEntity<Summary> getSummaryById(@PathVariable String id) {
-        Optional<Summary> summary = summaryService.getSummaryById(id);
-        return summary.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    }
+@GetMapping("/{id}")
+public ResponseEntity<SummaryDTO> getSummaryById(@PathVariable String id) {
+    Optional<Summary> summary = summaryService.getSummaryById(id);
+    
+    // Check if the summary is present
+    if (summary.isPresent()) {
+        // Increment the read count
+        Summary summaryEntity = summary.get();
+        summaryEntity.setReadCount(summaryEntity.getReadCount() + 1); // Increment the read count
 
-    // Create a new summary
+        // Save the updated summary back to the database
+        summaryService.updateSummary(summaryEntity);
+
+        // Map the Summary entity to SummaryDTO
+        SummaryDTO summaryDTO = mapToSummaryDTO(summaryEntity);
+        return new ResponseEntity<>(summaryDTO, HttpStatus.OK);
+    } else {
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND); // If the summary is not found
+    }
+}
+@GetMapping("/top10")
+public ResponseEntity<List<SummaryDTO>> getTop10MostReadSummaries() {
+    List<Summary> topSummaries = summaryService.getTop10MostReadSummaries();
+    
+    // Map the entities to DTOs
+    List<SummaryDTO> topSummaryDTOs = topSummaries.stream()
+        .map(this::mapToSummaryDTO)
+        .collect(Collectors.toList());
+        
+    return new ResponseEntity<>(topSummaryDTOs, HttpStatus.OK);
+}
+
+
+
+@GetMapping("/search")
+public ResponseEntity<List<SummaryDTO>> searchSummariesByTitle(@RequestParam String searchTerm) {
+    List<Summary> summaries = summaryService.searchSummariesByTitle(searchTerm);
+    List<SummaryDTO> summaryDTOs = summaries.stream()
+            .map(this::mapToSummaryDTO)
+            .collect(Collectors.toList());
+    return new ResponseEntity<>(summaryDTOs, HttpStatus.OK);
+}
+
+// Method to map Summary to SummaryDTO
+private SummaryDTO mapToSummaryDTO(Summary summary) {
+    SummaryDTO summaryDTO = new SummaryDTO();
+    summaryDTO.setSummaryId(summary.getSummaryId());
+    summaryDTO.setTitle(summary.getTitle());
+    summaryDTO.setContent(summary.getContent());
+    summaryDTO.setSummaryContent(summary.getSummaryContent());
+    summaryDTO.setStatus(summary.getStatus());
+    summaryDTO.setMethod(summary.getMethod());
+    summaryDTO.setGrade(summary.getGrade());
+    summaryDTO.setReadCount(summary.getReadCount());
+    summaryDTO.setCreatedByUserId(summary.getCreatedBy().getUserId()); // Assuming you're using a User object for createdBy
+
+    return summaryDTO;
+}
     @PostMapping
     public ResponseEntity<Summary> createSummary(@RequestBody Summary summary) {
-        Summary createdSummary = summaryService.createSummary(summary);
-        return new ResponseEntity<>(createdSummary, HttpStatus.CREATED);
+        // Fetch the user by the UUID provided (the User object itself should be populated in the summary)
+        Optional<User> user = userRepository.findById(summary.getCreatedBy().getUserId());
+        if (user.isPresent()) {
+            summary.setCreatedBy(user.get()); // Set the user for the summary
+            Summary createdSummary = summaryService.createSummary(summary);
+            return new ResponseEntity<>(createdSummary, HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // If the user does not exist
+        }
     }
+    
 
     // Update an existing summary
     @PutMapping("/{id}")
@@ -57,6 +121,8 @@ public class SummaryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSummary(@PathVariable String id) {
         summaryService.deleteSummary(id);
+        //print the console
+        
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -68,12 +134,11 @@ public class SummaryController {
     }
 
     // Get all summaries created by a specific user
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Summary>> getSummariesByUser(@PathVariable String userId) {
-        List<Summary> summaries = summaryService.getSummariesByUser(userId);
+    @GetMapping("/contributor/{userId}")
+    public ResponseEntity<List<SummaryDTO>> getSummariesByContributor(@PathVariable String userId) {
+        List<SummaryDTO> summaries = summaryService.getSummariesByContributor(userId);
         return new ResponseEntity<>(summaries, HttpStatus.OK);
     }
-
     // Approve or reject a summary
     @PutMapping("/{id}/status")
     public ResponseEntity<Void> updateSummaryStatus(@PathVariable String id, @RequestParam String status) {
@@ -81,13 +146,15 @@ public class SummaryController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    // Get all summaries by grade level
-    @GetMapping("/grade/{grade}")
-    public ResponseEntity<List<Summary>> getSummariesByGrade(@PathVariable String grade) {
-        List<Summary> summaries = summaryService.getSummariesByGrade(grade);
-        return new ResponseEntity<>(summaries, HttpStatus.OK);
-    }
+   
+     // Get all summaries by grade
+     @GetMapping("/grade/{grade}")
+     public ResponseEntity<List<SummaryDTO>> getSummariesByGrade(@PathVariable String grade) {
+         List<SummaryDTO> summaries = summaryService.getSummariesByGrade(grade);
+         return new ResponseEntity<>(summaries, HttpStatus.OK);
+     }
 
+    // Get all summaries by method (e.g., extractive, abstractive)
     @GetMapping("/method/{method}")
     public ResponseEntity<List<Summary>> getSummariesByMethod(@PathVariable String method) {
         List<Summary> summaries = summaryService.getSummariesByMethod(method);

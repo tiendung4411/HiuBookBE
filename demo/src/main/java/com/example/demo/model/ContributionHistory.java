@@ -24,7 +24,7 @@ public class ContributionHistory {
     // Getters and setters
     public String getContributionId() {
         return contributionId;
-    }
+    } 
 
     public void setContributionId(String contributionId) {
         this.contributionId = contributionId;

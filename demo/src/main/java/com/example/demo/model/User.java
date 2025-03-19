@@ -1,5 +1,6 @@
 package com.example.demo.model;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -45,29 +46,17 @@ public class User {
 
     private boolean isActive = true; // To manage account status (active/inactive)
 
-    // @CreationTimestamp
-    // @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    // private LocalDateTime createdAt;
 
-    // @UpdateTimestamp
-    // @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    // private LocalDateTime updatedAt;
 
-    /**
-     * Hash the user's password using BCrypt.
-     */
-    public void setPassword(String rawPassword) {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        this.password = encoder.encode(rawPassword);
+
+    public void setPassword(String rawPassword, BCryptPasswordEncoder passwordEncoder) {
+        this.password = passwordEncoder.encode(rawPassword);
     }
 
-    /**
-     * Check if a raw password matches the hashed password.
-     */
-    public boolean checkPassword(String rawPassword) {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        return encoder.matches(rawPassword, this.password);
+    public boolean checkPassword(String rawPassword, BCryptPasswordEncoder passwordEncoder) {
+        return passwordEncoder.matches(rawPassword, this.password);
     }
+
 
     // get AvatarUrl
     public String getAvatarUrl() {

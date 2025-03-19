@@ -1,11 +1,14 @@
 package com.example.demo.controller;
-
+import com.example.demo.dto.LoginRequest;
+import com.example.demo.dto.UserResponse;
+import com.example.demo.service.PasswordService;
 import com.example.demo.model.User;
 import com.example.demo.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,10 +39,11 @@ public class UserController {
     // Create a new user
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
-        User createdUser = userService.createUser(user);
-        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
-    }
+        user.setPassword(user.getPassword(), passwordEncoder);
+        User savedUser = userService.createUser(user);
 
+        return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+    }
     // Update an existing user
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user) {
@@ -52,7 +56,38 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    // Login endpoint
 
+
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @PostMapping("/auth/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        Optional<User> userOptional = userService.findByUsername(loginRequest.getUsername());
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+
+            boolean passwordMatches = user.checkPassword(loginRequest.getPassword(), passwordEncoder);
+
+            if (passwordMatches) {
+                UserResponse userResponse = new UserResponse();
+                userResponse.setUserId(user.getUserId());
+                userResponse.setUsername(user.getUsername());
+                userResponse.setEmail(user.getEmail());
+                userResponse.setRole(user.getRole());
+                userResponse.setFullName(user.getFullName());
+                userResponse.setPhoneNumber(user.getPhoneNumber());
+                userResponse.setAvatarUrl(user.getAvatarUrl());
+
+                return new ResponseEntity<>(userResponse, HttpStatus.OK);
+            }
+        }
+
+        return new ResponseEntity<>("Invalid username or password", HttpStatus.UNAUTHORIZED);
+    }
     // Delete a user by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {

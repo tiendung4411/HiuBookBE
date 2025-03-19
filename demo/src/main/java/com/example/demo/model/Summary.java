@@ -29,13 +29,17 @@ public class Summary {
     @Column(nullable = false, length = 5000)
     private String content; // Content of the summary
 
+    @Column(nullable = false, length = 1000)
+    private String summaryContent; // New field for summarized content (short version of content)
+
     @Column(nullable = true)
     private String imageUrl; // Optional image URL for the summary
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy; // Reference to the user who created this summary
-
+  
+    
     @Column(nullable = false)
     private String status = "PENDING"; // Status: PENDING, APPROVED, REJECTED
 
@@ -45,10 +49,10 @@ public class Summary {
     @Column(nullable = false)
     private String method; // Summarization method: PHOBERT or T5_DIEN_GIAI
 
-    // @CreationTimestamp
-    // private LocalDateTime createdAt;
+    //read count
+    @Column(nullable = false)
+    private int readCount = 0; // Number of times the summary is read
 
-    // @UpdateTimestamp
-    // private LocalDateTime updatedAt;
-
+    // Getters and Setters  
+ 
 }

@@ -34,7 +34,9 @@ public class UserService {
     public List<User> getUsersByRole(String role) {
         return userRepository.findByRole(role);
     }
-
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
     /**
      * Get a user by their username.
      */
@@ -64,5 +66,9 @@ public class UserService {
             user.setRole("CONTRIBUTOR");
             userRepository.save(user);
         }
+    }
+
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 }
