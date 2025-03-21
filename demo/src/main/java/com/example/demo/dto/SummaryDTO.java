@@ -1,5 +1,7 @@
 package com.example.demo.dto;
 
+import java.util.Date;
+
 public class SummaryDTO {
     private String summaryId;
     private String title;
@@ -10,6 +12,10 @@ public class SummaryDTO {
     private String grade;
     private String createdByUserId;
     private int readCount;
+
+    // New fields for tracking creation and approval times
+    private Date createdAt;
+    private Date approvedAt;
 
     // Getters and Setters
 
@@ -77,11 +83,29 @@ public class SummaryDTO {
         this.createdByUserId = createdByUserId;
     }
 
+    public int getReadCount() {
+        return readCount;
+    }
+
     public void setReadCount(int readCount) {
         this.readCount = readCount;
     }
-    
-    public int getReadCount() {
-        return readCount;
+
+    // Getters and Setters for new fields
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getApprovedAt() {
+        return approvedAt;
+    }
+
+    public void setApprovedAt(Date approvedAt) {
+        this.approvedAt = approvedAt;
     }
 }

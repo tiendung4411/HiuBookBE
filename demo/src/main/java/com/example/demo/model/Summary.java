@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import java.util.Date;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -38,8 +39,7 @@ public class Summary {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy; // Reference to the user who created this summary
-  
-    
+
     @Column(nullable = false)
     private String status = "PENDING"; // Status: PENDING, APPROVED, REJECTED
 
@@ -49,10 +49,14 @@ public class Summary {
     @Column(nullable = false)
     private String method; // Summarization method: PHOBERT or T5_DIEN_GIAI
 
-    //read count
+    // Read count
     @Column(nullable = false)
     private int readCount = 0; // Number of times the summary is read
+    @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private Date createdAt; // Trường này sẽ tự động cập nhật khi tạo bản ghi
+    
+    @Column(nullable = true, columnDefinition = "TIMESTAMP")
+    private Date approvedAt; // Trường này không tự động cập nhật
 
-    // Getters and Setters  
- 
+
 }

@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,26 +33,33 @@ public ResponseEntity<List<SummaryDTO>> getAllSummaries() {
     return new ResponseEntity<>(summaries, HttpStatus.OK);
 }
 
-@GetMapping("/{id}")
-public ResponseEntity<SummaryDTO> getSummaryById(@PathVariable String id) {
-    Optional<Summary> summary = summaryService.getSummaryById(id);
-    
-    // Check if the summary is present
-    if (summary.isPresent()) {
-        // Increment the read count
-        Summary summaryEntity = summary.get();
-        summaryEntity.setReadCount(summaryEntity.getReadCount() + 1); // Increment the read count
 
-        // Save the updated summary back to the database
-        summaryService.updateSummary(summaryEntity);
+@GetMapping("/{id}")
+public ResponseEntity<SummaryDTO> getSummaryById(@PathVariable String id, @RequestParam String userId) {
+    Optional<Summary> summaryOpt = summaryService.getSummaryById(id);
+
+    if (summaryOpt.isPresent()) {
+        Summary summary = summaryOpt.get();
+
+        // Log the read history with the userId (no need to fetch User object)
+        User user = userRepository.findById(userId).orElse(null); // Fetch the user using userId
+        if (user != null) {
+            summaryService.logReadHistory(user, summary); // Log the read history
+        }
+
+        // Increment the read count
+        summary.setReadCount(summary.getReadCount() + 1);
+        summaryService.updateSummary(summary);
 
         // Map the Summary entity to SummaryDTO
-        SummaryDTO summaryDTO = mapToSummaryDTO(summaryEntity);
+        SummaryDTO summaryDTO = mapToSummaryDTO(summary);
         return new ResponseEntity<>(summaryDTO, HttpStatus.OK);
     } else {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND); // If the summary is not found
     }
 }
+
+
 @GetMapping("/top10")
 public ResponseEntity<List<SummaryDTO>> getTop10MostReadSummaries() {
     List<Summary> topSummaries = summaryService.getTop10MostReadSummaries();
@@ -75,7 +83,6 @@ public ResponseEntity<List<SummaryDTO>> searchSummariesByTitle(@RequestParam Str
     return new ResponseEntity<>(summaryDTOs, HttpStatus.OK);
 }
 
-// Method to map Summary to SummaryDTO
 private SummaryDTO mapToSummaryDTO(Summary summary) {
     SummaryDTO summaryDTO = new SummaryDTO();
     summaryDTO.setSummaryId(summary.getSummaryId());
@@ -88,20 +95,34 @@ private SummaryDTO mapToSummaryDTO(Summary summary) {
     summaryDTO.setReadCount(summary.getReadCount());
     summaryDTO.setCreatedByUserId(summary.getCreatedBy().getUserId()); // Assuming you're using a User object for createdBy
 
+    // Add createdAt and approvedAt
+    summaryDTO.setCreatedAt(summary.getCreatedAt());
+    summaryDTO.setApprovedAt(summary.getApprovedAt());
+
     return summaryDTO;
 }
-    @PostMapping
-    public ResponseEntity<Summary> createSummary(@RequestBody Summary summary) {
-        // Fetch the user by the UUID provided (the User object itself should be populated in the summary)
-        Optional<User> user = userRepository.findById(summary.getCreatedBy().getUserId());
-        if (user.isPresent()) {
-            summary.setCreatedBy(user.get()); // Set the user for the summary
-            Summary createdSummary = summaryService.createSummary(summary);
-            return new ResponseEntity<>(createdSummary, HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // If the user does not exist
-        }
+@PostMapping
+public ResponseEntity<Summary> createSummary(@RequestBody Summary summary) {
+    // Manually set createdAt if it's not already set
+    if (summary.getCreatedAt() == null) {
+        summary.setCreatedAt(new Date()); // Set the current date and time as createdAt
     }
+
+    // Handle approval time if necessary
+    if ("APPROVED".equals(summary.getStatus())) {
+        summary.setApprovedAt(new Date()); // Set the approval time when the status is APPROVED
+    }
+
+    Optional<User> user = userRepository.findById(summary.getCreatedBy().getUserId());
+    if (user.isPresent()) {
+        summary.setCreatedBy(user.get()); // Set the user for the summary
+        Summary createdSummary = summaryService.createSummary(summary);
+        return new ResponseEntity<>(createdSummary, HttpStatus.CREATED);
+    } else {
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND); // If the user does not exist
+    }
+}
+
     
 
     // Update an existing summary

@@ -1,7 +1,6 @@
 package com.example.demo.controller;
 import com.example.demo.dto.LoginRequest;
 import com.example.demo.dto.UserResponse;
-import com.example.demo.service.PasswordService;
 import com.example.demo.model.User;
 import com.example.demo.service.UserService;
 

@@ -1,8 +1,10 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.SummaryDTO;
+import com.example.demo.model.ReadHistory;
 import com.example.demo.model.Summary;
 import com.example.demo.model.User;
+import com.example.demo.repository.ReadHistoryRepository;
 import com.example.demo.repository.SummaryRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +21,22 @@ public class SummaryService {
     private SummaryRepository summaryRepository;
 
     @Autowired
+    private ReadHistoryRepository readHistoryRepository;
+
+        
+    @Autowired
     private UserService userService;
 
+    
+    public void logReadHistory(User user, Summary summary) {
+        // Create a new ReadHistory entry
+        ReadHistory readHistory = new ReadHistory();
+        readHistory.setUser(user);
+        readHistory.setSummary(summary);
+
+        // Save the read history to the database
+        readHistoryRepository.save(readHistory);
+    }
     public Summary createSummary(Summary summary) {
         return summaryRepository.save(summary);
     }
@@ -29,25 +45,29 @@ public class SummaryService {
         summaryRepository.deleteById(id);
     }
 
-  public List<SummaryDTO> getAllSummaries() {
-    List<Summary> summaries = summaryRepository.findAll();
-    List<SummaryDTO> summaryDTOs = new ArrayList<>();
-
-    for (Summary summary : summaries) {
-        SummaryDTO dto = new SummaryDTO();
-        dto.setSummaryId(summary.getSummaryId());
-        dto.setTitle(summary.getTitle());
-        dto.setContent(summary.getContent());
-        dto.setSummaryContent(summary.getSummaryContent());
-        dto.setStatus(summary.getStatus());
-        dto.setMethod(summary.getMethod());
-        dto.setGrade(summary.getGrade());
-        dto.setCreatedByUserId(summary.getCreatedBy().getUserId()); // Just the User ID
-        summaryDTOs.add(dto);
+    public List<SummaryDTO> getAllSummaries() {
+        List<Summary> summaries = summaryRepository.findAll();
+        List<SummaryDTO> summaryDTOs = new ArrayList<>();
+    
+        for (Summary summary : summaries) {
+            SummaryDTO dto = new SummaryDTO();
+            dto.setSummaryId(summary.getSummaryId());
+            dto.setTitle(summary.getTitle());
+            dto.setContent(summary.getContent());
+            dto.setSummaryContent(summary.getSummaryContent());
+            dto.setStatus(summary.getStatus());
+            dto.setMethod(summary.getMethod());
+            dto.setGrade(summary.getGrade());
+            dto.setReadCount(summary.getReadCount());
+            dto.setCreatedByUserId(summary.getCreatedBy().getUserId()); // Just the User ID
+            dto.setCreatedAt(summary.getCreatedAt());  // Add createdAt to DTO
+            dto.setApprovedAt(summary.getApprovedAt());  // Add approvedAt to DTO
+            summaryDTOs.add(dto);
+        }
+    
+        return summaryDTOs;
     }
-
-    return summaryDTOs;
-}
+    
 
     public Optional<Summary> getSummaryById(String id) {
         return summaryRepository.findById(id);
@@ -81,6 +101,8 @@ public class SummaryService {
                 dto.setStatus(summary.getStatus());
                 dto.setMethod(summary.getMethod());
                 dto.setGrade(summary.getGrade());
+                dto.setCreatedAt(summary.getCreatedAt());  // Add createdAt to DTO
+                dto.setApprovedAt(summary.getApprovedAt());
                 dto.setCreatedByUserId(summary.getCreatedBy().getUserId()); // Set User ID
                 summaryDTOs.add(dto);
             }
@@ -114,6 +136,9 @@ public class SummaryService {
             dto.setStatus(summary.getStatus());
             dto.setMethod(summary.getMethod());
             dto.setGrade(summary.getGrade());
+           
+            dto.setCreatedAt(summary.getCreatedAt());  // Add createdAt to DTO
+            dto.setApprovedAt(summary.getApprovedAt());
             dto.setCreatedByUserId(summary.getCreatedBy().getUserId()); // Set User ID
             summaryDTOs.add(dto);
         }
